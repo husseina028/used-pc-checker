@@ -1,0 +1,64 @@
+Used Laptop Buyer Checklist
+===========================
+
+Best quick rule:
+Do not buy if the report shows disk SMART failure, WHEA hardware errors, recent BSODs, swollen battery signs, BIOS password lock, liquid damage, or a seller who refuses basic testing.
+
+Before running checks:
+- Bring the charger and plug the laptop in.
+- Confirm the model and serial number on the chassis match the BIOS/report.
+- Ask if the laptop has a BIOS password, BitLocker recovery key, or company/school management.
+- Check that Windows can be reset and activated.
+
+Automated report red flags:
+- Battery health below 80%: budget for battery replacement.
+- Battery health below 70%: strong warning unless price is very low.
+- Disk SMART predicts failure: do not buy unless replacing the drive immediately.
+- Disk, NTFS, stornvme, storahci, or iaStor errors: investigate heavily.
+- WHEA-Logger events: possible CPU/RAM/motherboard/PCIe hardware problem.
+- BugCheck or repeated blue screen events: risky.
+- Many Device Manager problem devices: missing drivers or bad hardware.
+- Windows installed only a few days ago: seller may have wiped reliability history.
+
+Physical inspection:
+- Look for bent chassis, cracked screen corners, missing screws, loose hinges, and gaps near the battery.
+- Smell for burnt electronics or liquid residue.
+- Press lightly around keyboard and palm rest; bulging can mean swollen battery.
+- Check charger cable, plug fit, and charging LED.
+- Move the screen through its full hinge travel and watch for flicker.
+
+Screen test:
+- Use the included screen test.
+- Check white, black, red, green, and blue screens for dead pixels, bright spots, pressure marks, and uneven backlight.
+- Lower and raise brightness.
+- Wiggle the hinge gently while watching for flicker.
+
+Keyboard and touchpad:
+- Run the dedicated keyboard checker and choose 100% or 60% to match the keyboard.
+- Test every expected key, including Fn, arrows, function keys, volume, brightness, power, and keyboard backlight.
+- Test left click, right click, two-finger scroll, tap-to-click, and drag.
+
+Ports and wireless:
+- Run the port checker and save the report after testing.
+- Test charger port.
+- Test every USB port with your USB.
+- Test HDMI/USB-C display output if you need it.
+- Connect to Wi-Fi and open a webpage.
+- Test Bluetooth if you use it.
+- Test headphone jack if present.
+
+Camera, mic, speakers:
+- Use the included browser test for camera and speaker tones.
+- Record a short voice note in Windows Sound Recorder if microphone quality matters.
+
+Performance sanity:
+- Open Task Manager.
+- CPU should idle low after a minute or two.
+- Memory should not be maxed out on a clean desktop.
+- Fan should not grind or pulse loudly at idle.
+- The machine should not shut down, freeze, or get extremely hot during testing.
+
+Buying decision:
+- PASS with only minor WARN items: probably okay if price is fair.
+- Any FAIL item: pause, negotiate hard, or walk away.
+- Multiple WARN items: only buy at a discount and only if you understand the repair cost.

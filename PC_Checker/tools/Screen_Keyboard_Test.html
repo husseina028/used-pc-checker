@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screen Keyboard Touchpad Test</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --panel: #1d2129;
+      --panel-2: #272d37;
+      --text: #f4f7fb;
+      --muted: #b9c2cf;
+      --line: #3b4350;
+      --accent: #27c3a6;
+      --warn: #ffd166;
+      --bad: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #151922;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0;
+      font-weight: 650;
+    }
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--accent); }
+    select {
+      border: 1px solid var(--line);
+      background: #151922;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+      min-width: 0;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 14px;
+      padding: 14px;
+    }
+    section {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      min-width: 0;
+    }
+    section h2 {
+      font-size: 15px;
+      margin: 0;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-body { padding: 12px; }
+    #screen {
+      min-height: 48vh;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    #screen.grid {
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.2) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,.2) 1px, transparent 1px),
+        #fff;
+      background-size: 32px 32px;
+    }
+    #screen.gradient {
+      background: linear-gradient(90deg, #000, #fff);
+    }
+    #screen .label {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .swatch {
+      width: 36px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #888;
+      padding: 0;
+    }
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(32px, 1fr));
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .key {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: #151922;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 2px 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .key.hit {
+      background: #0f6d5e;
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .status-line {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    #pad {
+      height: 260px;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #10131a;
+      touch-action: none;
+      display: block;
+    }
+    video {
+      width: 100%;
+      max-height: 260px;
+      background: #000;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      object-fit: contain;
+    }
+    .camera-controls {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      background: #151922;
+      min-width: 0;
+    }
+    .metric b {
+      display: block;
+      font-size: 18px;
+      color: var(--accent);
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      .keys { grid-template-columns: repeat(8, minmax(32px, 1fr)); }
+      .camera-controls { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Used PC Manual Tester</h1>
+    <div class="bar">
+      <button id="fullscreen">Fullscreen</button>
+      <button id="resetKeys">Reset Keys</button>
+      <button id="leftTone">Left Tone</button>
+      <button id="rightTone">Right Tone</button>
+      <button id="cameraBtnHeader">Camera Preview</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Screen Test</h2>
+      <div class="section-body">
+        <div id="screen"><div class="label" id="screenLabel">White</div></div>
+        <div class="swatches">
+          <button class="swatch" data-color="#ffffff" title="White" style="background:#ffffff"></button>
+          <button class="swatch" data-color="#000000" title="Black" style="background:#000000"></button>
+          <button class="swatch" data-color="#ff0000" title="Red" style="background:#ff0000"></button>
+          <button class="swatch" data-color="#00ff00" title="Green" style="background:#00ff00"></button>
+          <button class="swatch" data-color="#0000ff" title="Blue" style="background:#0000ff"></button>
+          <button class="swatch" data-color="#808080" title="Gray" style="background:#808080"></button>
+          <button id="gridBtn">Grid</button>
+          <button id="gradientBtn">Gradient</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Camera And Speakers</h2>
+      <div class="section-body">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="camera-controls">
+          <select id="cameraSelect" aria-label="Camera device">
+            <option value="">Default camera</option>
+          </select>
+          <button id="cameraRefresh" type="button">Refresh Cameras</button>
+          <button id="cameraBtn" type="button">Start Camera</button>
+          <button id="cameraStop" type="button">Stop Camera</button>
+        </div>
+        <div class="status-line" id="mediaStatus">Use speaker buttons for left/right tone. Use camera preview to test webcam permission and image.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Keyboard Test</h2>
+      <div class="section-body">
+        <div>Press every key. Pressed keys turn green.</div>
+        <div class="status-line" id="lastKey">Last key: none</div>
+        <div class="keys" id="keys"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Touchpad / Mouse Test</h2>
+      <div class="section-body">
+        <canvas id="pad"></canvas>
+        <div class="metrics">
+          <div class="metric"><b id="moves">0</b><span>moves</span></div>
+          <div class="metric"><b id="clicks">0</b><span>clicks</span></div>
+          <div class="metric"><b id="wheel">0</b><span>wheel</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const screen = document.getElementById('screen');
+    const screenLabel = document.getElementById('screenLabel');
+    const names = {
+      '#ffffff': 'White',
+      '#000000': 'Black',
+      '#ff0000': 'Red',
+      '#00ff00': 'Green',
+      '#0000ff': 'Blue',
+      '#808080': 'Gray'
+    };
+
+    document.querySelectorAll('.swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        screen.classList.remove('grid', 'gradient');
+        screen.style.background = btn.dataset.color;
+        screenLabel.textContent = names[btn.dataset.color] || btn.title;
+      });
+    });
+    document.getElementById('gridBtn').addEventListener('click', () => {
+      screen.style.background = '';
+      screen.classList.remove('gradient');
+      screen.classList.add('grid');
+      screenLabel.textContent = 'Grid';
+    });
+    document.getElementById('gradientBtn').addEventListener('click', () => {
+      screen.style.background = '';
+      screen.classList.remove('grid');
+      screen.classList.add('gradient');
+      screenLabel.textContent = 'Gradient';
+    });
+    document.getElementById('fullscreen').addEventListener('click', () => {
+      const target = screen;
+      if (document.fullscreenElement) document.exitFullscreen();
+      else target.requestFullscreen().catch(() => {});
+    });
+
+    const keyNames = [
+      'Esc','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+      '`','1','2','3','4','5','6','7','8','9','0','-','=','Backspace',
+      'Tab','Q','W','E','R','T','Y','U','I','O','P','[',']','\\',
+      'CapsLock','A','S','D','F','G','H','J','K','L',';',"'",'Enter',
+      'Shift','Z','X','C','V','B','N','M',',','.','/','Shift',
+      'Ctrl','Win','Alt','Space','Alt','Fn','Menu','Ctrl',
+      'Insert','Delete','Home','End','PageUp','PageDown','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'
+    ];
+    const keyBox = document.getElementById('keys');
+    const keyMap = new Map();
+    keyNames.forEach((name, idx) => {
+      const el = document.createElement('div');
+      el.className = 'key';
+      el.textContent = name;
+      el.dataset.key = name.toLowerCase();
+      keyBox.appendChild(el);
+      if (!keyMap.has(name.toLowerCase())) keyMap.set(name.toLowerCase(), []);
+      keyMap.get(name.toLowerCase()).push(el);
+      if (name === 'Space') el.style.gridColumn = 'span 3';
+      if (name === 'Backspace' || name === 'CapsLock' || name === 'Enter') el.style.gridColumn = 'span 2';
+    });
+    function markKey(name) {
+      const normalized = normalizeKey(name);
+      const list = keyMap.get(normalized);
+      if (list) list.forEach(el => el.classList.add('hit'));
+      document.getElementById('lastKey').textContent = 'Last key: ' + name;
+    }
+    function normalizeKey(k) {
+      const map = {
+        ' ': 'space',
+        'control': 'ctrl',
+        'meta': 'win',
+        'contextmenu': 'menu',
+        'arrowup': 'arrowup',
+        'arrowdown': 'arrowdown',
+        'arrowleft': 'arrowleft',
+        'arrowright': 'arrowright'
+      };
+      const lower = String(k).toLowerCase();
+      return map[lower] || lower;
+    }
+    window.addEventListener('keydown', e => {
+      markKey(e.key);
+      if (['F5','F11','F12'].includes(e.key)) return;
+      e.preventDefault();
+    });
+    document.getElementById('resetKeys').addEventListener('click', () => {
+      document.querySelectorAll('.key.hit').forEach(el => el.classList.remove('hit'));
+      document.getElementById('lastKey').textContent = 'Last key: none';
+    });
+
+    let audioCtx;
+    function tone(panValue) {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const pan = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
+      if (pan) {
+        pan.pan.value = panValue;
+        osc.connect(pan).connect(gain).connect(audioCtx.destination);
+      } else {
+        osc.connect(gain).connect(audioCtx.destination);
+      }
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.85);
+    }
+    document.getElementById('leftTone').addEventListener('click', () => tone(-1));
+    document.getElementById('rightTone').addEventListener('click', () => tone(1));
+
+    const video = document.getElementById('video');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const mediaStatus = document.getElementById('mediaStatus');
+    let cameraStream = null;
+
+    function cameraSupported() {
+      return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      video.srcObject = null;
+    }
+
+    function cameraErrorMessage(err) {
+      const name = err && err.name ? err.name : 'CameraError';
+      const message = err && err.message ? err.message : 'Unknown camera error';
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        return 'Camera permission is blocked. Allow camera access in the browser and Windows Privacy settings.';
+      }
+      if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+        return 'No usable camera was found. Check Device Manager, camera shutter, Fn camera key, or BIOS camera setting.';
+      }
+      if (name === 'NotReadableError' || /could not start video source/i.test(message)) {
+        return 'Camera was detected but could not start. Close Camera, Zoom, Teams, Discord, browser tabs, or any app using the webcam, then try again. Also check the physical privacy shutter and Windows camera privacy setting.';
+      }
+      if (name === 'NotSupportedError') {
+        return 'This browser context does not support camera preview. Try opening this file in Microsoft Edge or Chrome.';
+      }
+      return name + ': ' + message;
+    }
+
+    async function refreshCameras() {
+      if (!cameraSupported()) {
+        mediaStatus.textContent = 'Camera preview is not supported in this browser.';
+        return;
+      }
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(device => device.kind === 'videoinput');
+        const selected = cameraSelect.value;
+        cameraSelect.innerHTML = '<option value="">Default camera</option>';
+        cameras.forEach((device, index) => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.label || ('Camera ' + (index + 1));
+          cameraSelect.appendChild(option);
+        });
+        if ([...cameraSelect.options].some(option => option.value === selected)) {
+          cameraSelect.value = selected;
+        }
+        mediaStatus.textContent = cameras.length
+          ? ('Detected ' + cameras.length + ' camera device(s). Select one and press Start Camera.')
+          : 'No camera devices were listed by the browser.';
+      } catch (err) {
+        mediaStatus.textContent = 'Could not list cameras: ' + cameraErrorMessage(err);
+      }
+    }
+
+    async function tryOpenCamera(constraints) {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play().catch(() => {});
+      return stream;
+    }
+
+    async function startCamera() {
+      if (!cameraSupported()) {
+        mediaStatus.textContent = 'Camera preview is not supported in this browser.';
+        return;
+      }
+
+      stopCamera();
+      mediaStatus.textContent = 'Starting camera...';
+
+      const deviceId = cameraSelect.value;
+      const attempts = [];
+      if (deviceId) {
+        attempts.push({
+          video: {
+            deviceId: { exact: deviceId },
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+            frameRate: { ideal: 15, max: 30 }
+          },
+          audio: false
+        });
+        attempts.push({ video: { deviceId: { exact: deviceId } }, audio: false });
+      }
+      attempts.push({
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 15, max: 30 }
+        },
+        audio: false
+      });
+      attempts.push({ video: true, audio: false });
+
+      let lastError = null;
+      for (const constraints of attempts) {
+        try {
+          cameraStream = await tryOpenCamera(constraints);
+          const track = cameraStream.getVideoTracks()[0];
+          const settings = track && track.getSettings ? track.getSettings() : {};
+          await refreshCameras();
+          mediaStatus.textContent = 'Camera is showing'
+            + (track && track.label ? ': ' + track.label : '')
+            + (settings.width && settings.height ? (' at ' + settings.width + 'x' + settings.height) : '')
+            + '. Check focus, color, and flicker.';
+          return;
+        } catch (err) {
+          lastError = err;
+          stopCamera();
+        }
+      }
+
+      await refreshCameras();
+      mediaStatus.textContent = 'Camera preview failed: ' + cameraErrorMessage(lastError);
+    }
+
+    document.getElementById('cameraBtn').addEventListener('click', startCamera);
+    document.getElementById('cameraBtnHeader').addEventListener('click', startCamera);
+    document.getElementById('cameraRefresh').addEventListener('click', refreshCameras);
+    document.getElementById('cameraStop').addEventListener('click', () => {
+      stopCamera();
+      mediaStatus.textContent = 'Camera stopped.';
+    });
+    window.addEventListener('beforeunload', stopCamera);
+    refreshCameras();
+
+    const canvas = document.getElementById('pad');
+    const ctx = canvas.getContext('2d');
+    let moves = 0, clicks = 0, wheel = 0;
+    function sizeCanvas() {
+      const r = canvas.getBoundingClientRect();
+      canvas.width = Math.max(320, Math.floor(r.width * devicePixelRatio));
+      canvas.height = Math.floor(r.height * devicePixelRatio);
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      ctx.fillStyle = '#10131a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    sizeCanvas();
+    window.addEventListener('resize', sizeCanvas);
+    canvas.addEventListener('pointermove', e => {
+      const r = canvas.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      ctx.fillStyle = '#27c3a6';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      moves++;
+      document.getElementById('moves').textContent = moves;
+    });
+    canvas.addEventListener('pointerdown', e => {
+      clicks++;
+      document.getElementById('clicks').textContent = clicks;
+    });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      wheel += Math.sign(e.deltaY);
+      document.getElementById('wheel').textContent = wheel;
+    }, { passive: false });
+  </script>
+</body>
+</html>

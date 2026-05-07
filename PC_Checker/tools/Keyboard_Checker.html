@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keyboard Checker</title>
+  <style>
+    :root {
+      --bg: #eef2f4;
+      --panel: #ffffff;
+      --ink: #18212b;
+      --muted: #5e6a76;
+      --line: #cfd8df;
+      --key: #26313d;
+      --key-text: #f7fafc;
+      --active: #f0b429;
+      --pass: #15936b;
+      --fail: #c24137;
+      --info: #2563a8;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    h1 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: #f8fafb;
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 8px 10px;
+      min-height: 34px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--info); }
+    button.primary {
+      background: var(--info);
+      border-color: var(--info);
+      color: #fff;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+    .stat b {
+      display: block;
+      font-size: 24px;
+      color: var(--info);
+    }
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-width: 0;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .keyboard-scroll {
+      overflow: auto;
+      padding: 12px;
+    }
+    .keyboard {
+      min-width: 1160px;
+      display: grid;
+      gap: 7px;
+    }
+    .key-row {
+      display: flex;
+      gap: 5px;
+      align-items: stretch;
+      min-height: 42px;
+    }
+    .gap {
+      flex: var(--w, 1) 0 calc(var(--w, 1) * 42px);
+      min-width: calc(var(--w, 1) * 42px);
+    }
+    .key {
+      --w: 1;
+      flex: var(--w) 0 calc(var(--w) * 42px);
+      min-width: calc(var(--w) * 42px);
+      min-height: 42px;
+      border: 1px solid #151d26;
+      border-radius: 6px;
+      background: var(--key);
+      color: var(--key-text);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1px;
+      padding: 4px 5px;
+      line-height: 1.05;
+      text-align: center;
+      user-select: none;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+    }
+    .key small {
+      color: #b9c4cf;
+      font-size: 10px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .key span {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .key.active {
+      background: var(--active);
+      color: #1e1a10;
+      border-color: #8a640d;
+      transform: translateY(1px);
+    }
+    .key.hit {
+      background: var(--pass);
+      border-color: #0b5f45;
+      color: #fff;
+    }
+    .key.hit small { color: #d7fff0; }
+    .key.manual {
+      background: #314052;
+      border-color: #223044;
+    }
+    .key.unknown {
+      background: #6b3d8f;
+      border-color: #43235d;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, .7fr) minmax(0, 1.3fr);
+      gap: 12px;
+      padding: 12px;
+    }
+    .manual-grid, .missing-grid, .extra-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-content: flex-start;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 9px;
+      background: #f8fafb;
+      color: var(--ink);
+      font-size: 12px;
+    }
+    .pill.pass {
+      background: #dff5ed;
+      border-color: #9bd8c2;
+      color: #0f684d;
+    }
+    .pill.fail {
+      background: #fae4e1;
+      border-color: #e8b3ad;
+      color: #9e2f27;
+    }
+    .log {
+      min-height: 42px;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .focus-warning {
+      color: var(--fail);
+      font-weight: 650;
+    }
+    .layout-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(24, 33, 43, .72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .layout-dialog {
+      width: min(620px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .28);
+      padding: 18px;
+    }
+    .layout-dialog h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+    .layout-dialog p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .layout-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .layout-choice {
+      text-align: left;
+      min-height: 100px;
+      background: #f8fafb;
+    }
+    .layout-choice b {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    .layout-choice span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .layout-screen.hidden { display: none; }
+    @media (max-width: 850px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .toolbar { justify-content: flex-start; }
+      .stats { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+      .footer-grid { grid-template-columns: 1fr; }
+      .layout-options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body tabindex="0">
+  <div class="layout-screen" id="layoutScreen">
+    <div class="layout-dialog" role="dialog" aria-modal="true" aria-labelledby="layoutTitle">
+      <h2 id="layoutTitle">Choose keyboard size</h2>
+      <p>The report will only count missing keys for the layout you choose. Extra laptop hotkeys still show up separately.</p>
+      <div class="layout-options">
+        <button class="layout-choice" data-layout="full" type="button">
+          <b>100% keyboard</b>
+          <span>Full-size layout with F keys, arrows, navigation cluster, and numpad.</span>
+        </button>
+        <button class="layout-choice" data-layout="compact60" type="button">
+          <b>60% keyboard</b>
+          <span>Compact layout without a dedicated F-row, arrows, navigation cluster, or numpad.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <header>
+    <h1>Keyboard Checker</h1>
+    <div class="toolbar">
+      <button id="layoutBtn">Change Layout</button>
+      <button id="focusBtn" class="primary">Focus Test</button>
+      <button id="resetBtn">Reset</button>
+      <button id="copyBtn">Copy Summary</button>
+      <button id="printBtn">Print</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats">
+      <div class="stat"><b id="testedCount">0 / 0</b><span>standard keys tested</span></div>
+      <div class="stat"><b id="missingCount">0</b><span>standard keys left</span></div>
+      <div class="stat"><b id="manualCount">0</b><span>manual or media keys</span></div>
+      <div class="stat"><b id="layoutName">Choose</b><span>keyboard layout</span></div>
+      <div class="stat"><b id="lastKey">None</b><span>last detected key</span></div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Standard Keyboard</h2>
+        <div class="hint" id="focusState">Click Focus Test, then press every key.</div>
+      </div>
+      <div class="keyboard-scroll">
+        <div class="keyboard" id="keyboard"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Manual And Media Keys</h2>
+        <div class="hint">Use these for Fn-only keys, power, backlight, and laptop hotkeys.</div>
+      </div>
+      <div class="footer-grid">
+        <div>
+          <div class="manual-grid" id="manualKeys"></div>
+        </div>
+        <div>
+          <div class="log" id="eventLog">Waiting for key input.</div>
+          <h2 style="font-size:14px;margin:12px 0 8px;">Missing Standard Keys</h2>
+          <div class="missing-grid" id="missingKeys"></div>
+          <h2 style="font-size:14px;margin:12px 0 8px;">Extra Detected Keys</h2>
+          <div class="extra-grid" id="extraKeys"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const fullRows = [
+      [
+        { code: 'Escape', label: 'Esc' }, { gap: 0.7 },
+        { code: 'F1' }, { code: 'F2' }, { code: 'F3' }, { code: 'F4' }, { gap: 0.35 },
+        { code: 'F5' }, { code: 'F6' }, { code: 'F7' }, { code: 'F8' }, { gap: 0.35 },
+        { code: 'F9' }, { code: 'F10' }, { code: 'F11' }, { code: 'F12' }, { gap: 0.5 },
+        { code: 'PrintScreen', label: 'PrtSc' }, { code: 'ScrollLock', label: 'ScrLk' }, { code: 'Pause' }
+      ],
+      [
+        { code: 'Backquote', label: '`' }, { code: 'Digit1', label: '1' }, { code: 'Digit2', label: '2' },
+        { code: 'Digit3', label: '3' }, { code: 'Digit4', label: '4' }, { code: 'Digit5', label: '5' },
+        { code: 'Digit6', label: '6' }, { code: 'Digit7', label: '7' }, { code: 'Digit8', label: '8' },
+        { code: 'Digit9', label: '9' }, { code: 'Digit0', label: '0' }, { code: 'Minus', label: '-' },
+        { code: 'Equal', label: '=' }, { code: 'Backspace', w: 2 }, { gap: 0.5 },
+        { code: 'Insert', label: 'Ins' }, { code: 'Home' }, { code: 'PageUp', label: 'PgUp' }, { gap: 0.5 },
+        { code: 'NumLock', label: 'Num' }, { code: 'NumpadDivide', label: '/' }, { code: 'NumpadMultiply', label: '*' }, { code: 'NumpadSubtract', label: '-' }
+      ],
+      [
+        { code: 'Tab', w: 1.5 }, { code: 'KeyQ', label: 'Q' }, { code: 'KeyW', label: 'W' }, { code: 'KeyE', label: 'E' },
+        { code: 'KeyR', label: 'R' }, { code: 'KeyT', label: 'T' }, { code: 'KeyY', label: 'Y' }, { code: 'KeyU', label: 'U' },
+        { code: 'KeyI', label: 'I' }, { code: 'KeyO', label: 'O' }, { code: 'KeyP', label: 'P' },
+        { code: 'BracketLeft', label: '[' }, { code: 'BracketRight', label: ']' }, { code: 'Backslash', label: '\\', w: 1.5 }, { gap: 0.5 },
+        { code: 'Delete', label: 'Del' }, { code: 'End' }, { code: 'PageDown', label: 'PgDn' }, { gap: 0.5 },
+        { code: 'Numpad7', label: '7' }, { code: 'Numpad8', label: '8' }, { code: 'Numpad9', label: '9' }, { code: 'NumpadAdd', label: '+' }
+      ],
+      [
+        { code: 'CapsLock', label: 'Caps', w: 1.75 }, { code: 'KeyA', label: 'A' }, { code: 'KeyS', label: 'S' },
+        { code: 'KeyD', label: 'D' }, { code: 'KeyF', label: 'F' }, { code: 'KeyG', label: 'G' }, { code: 'KeyH', label: 'H' },
+        { code: 'KeyJ', label: 'J' }, { code: 'KeyK', label: 'K' }, { code: 'KeyL', label: 'L' }, { code: 'Semicolon', label: ';' },
+        { code: 'Quote', label: "'" }, { code: 'Enter', w: 2.25 }, { gap: 4 },
+        { code: 'Numpad4', label: '4' }, { code: 'Numpad5', label: '5' }, { code: 'Numpad6', label: '6' }, { code: 'NumpadEnter', label: 'Enter' }
+      ],
+      [
+        { code: 'ShiftLeft', label: 'Shift L', w: 2.25 }, { code: 'KeyZ', label: 'Z' }, { code: 'KeyX', label: 'X' },
+        { code: 'KeyC', label: 'C' }, { code: 'KeyV', label: 'V' }, { code: 'KeyB', label: 'B' }, { code: 'KeyN', label: 'N' },
+        { code: 'KeyM', label: 'M' }, { code: 'Comma', label: ',' }, { code: 'Period', label: '.' }, { code: 'Slash', label: '/' },
+        { code: 'ShiftRight', label: 'Shift R', w: 2.75 }, { gap: 1.55 },
+        { code: 'ArrowUp', label: 'Up' }, { gap: 1.45 },
+        { code: 'Numpad1', label: '1' }, { code: 'Numpad2', label: '2' }, { code: 'Numpad3', label: '3' }, { code: 'NumpadDecimal', label: '.' }
+      ],
+      [
+        { code: 'ControlLeft', label: 'Ctrl L', w: 1.3 }, { code: 'MetaLeft', label: 'Win L', w: 1.25 },
+        { code: 'AltLeft', label: 'Alt L', w: 1.25 }, { code: 'Space', w: 6.4 }, { code: 'AltRight', label: 'Alt R', w: 1.25 },
+        { code: 'MetaRight', label: 'Win R', w: 1.25 }, { code: 'ContextMenu', label: 'Menu', w: 1.25 },
+        { code: 'ControlRight', label: 'Ctrl R', w: 1.3 }, { gap: 0.5 },
+        { code: 'ArrowLeft', label: 'Left' }, { code: 'ArrowDown', label: 'Down' }, { code: 'ArrowRight', label: 'Right' }, { gap: 0.5 },
+        { code: 'Numpad0', label: '0', w: 2.05 }, { code: 'NumpadComma', label: ',' }
+      ]
+    ];
+
+    const compact60Rows = [
+      [
+        { code: 'Escape', label: 'Esc' }, { gap: 0.5 },
+        { code: 'Digit1', label: '1' }, { code: 'Digit2', label: '2' }, { code: 'Digit3', label: '3' },
+        { code: 'Digit4', label: '4' }, { code: 'Digit5', label: '5' }, { code: 'Digit6', label: '6' },
+        { code: 'Digit7', label: '7' }, { code: 'Digit8', label: '8' }, { code: 'Digit9', label: '9' },
+        { code: 'Digit0', label: '0' }, { code: 'Minus', label: '-' }, { code: 'Equal', label: '=' },
+        { code: 'Backspace', w: 2 }
+      ],
+      [
+        { code: 'Tab', w: 1.5 }, { code: 'KeyQ', label: 'Q' }, { code: 'KeyW', label: 'W' }, { code: 'KeyE', label: 'E' },
+        { code: 'KeyR', label: 'R' }, { code: 'KeyT', label: 'T' }, { code: 'KeyY', label: 'Y' }, { code: 'KeyU', label: 'U' },
+        { code: 'KeyI', label: 'I' }, { code: 'KeyO', label: 'O' }, { code: 'KeyP', label: 'P' },
+        { code: 'BracketLeft', label: '[' }, { code: 'BracketRight', label: ']' }, { code: 'Backslash', label: '\\', w: 1.5 }
+      ],
+      [
+        { code: 'CapsLock', label: 'Caps', w: 1.75 }, { code: 'KeyA', label: 'A' }, { code: 'KeyS', label: 'S' },
+        { code: 'KeyD', label: 'D' }, { code: 'KeyF', label: 'F' }, { code: 'KeyG', label: 'G' }, { code: 'KeyH', label: 'H' },
+        { code: 'KeyJ', label: 'J' }, { code: 'KeyK', label: 'K' }, { code: 'KeyL', label: 'L' }, { code: 'Semicolon', label: ';' },
+        { code: 'Quote', label: "'" }, { code: 'Enter', w: 2.25 }
+      ],
+      [
+        { code: 'ShiftLeft', label: 'Shift L', w: 2.25 }, { code: 'KeyZ', label: 'Z' }, { code: 'KeyX', label: 'X' },
+        { code: 'KeyC', label: 'C' }, { code: 'KeyV', label: 'V' }, { code: 'KeyB', label: 'B' }, { code: 'KeyN', label: 'N' },
+        { code: 'KeyM', label: 'M' }, { code: 'Comma', label: ',' }, { code: 'Period', label: '.' }, { code: 'Slash', label: '/' },
+        { code: 'ShiftRight', label: 'Shift R', w: 2.75 }
+      ],
+      [
+        { code: 'ControlLeft', label: 'Ctrl L', w: 1.3 }, { code: 'MetaLeft', label: 'Win L', w: 1.25 },
+        { code: 'AltLeft', label: 'Alt L', w: 1.25 }, { code: 'Space', w: 6.4 }, { code: 'AltRight', label: 'Alt R', w: 1.25 },
+        { code: 'MetaRight', label: 'Win R', w: 1.25 }, { code: 'ContextMenu', label: 'Menu', w: 1.25 },
+        { code: 'ControlRight', label: 'Ctrl R', w: 1.3 }
+      ]
+    ];
+
+    const layouts = {
+      full: { name: '100%', rows: fullRows, minWidth: '1160px' },
+      compact60: { name: '60%', rows: compact60Rows, minWidth: '760px' }
+    };
+
+    const manualKeys = [
+      { code: 'Fn', label: 'Fn' },
+      { code: 'Power', label: 'Power' },
+      { code: 'Sleep', label: 'Sleep' },
+      { code: 'WakeUp', label: 'Wake' },
+      { code: 'BrightnessDown', label: 'Brightness -' },
+      { code: 'BrightnessUp', label: 'Brightness +' },
+      { code: 'KeyboardBacklight', label: 'Keyboard light' },
+      { code: 'TouchpadToggle', label: 'Touchpad toggle' },
+      { code: 'AudioVolumeMute', label: 'Mute' },
+      { code: 'AudioVolumeDown', label: 'Volume -' },
+      { code: 'AudioVolumeUp', label: 'Volume +' },
+      { code: 'AudioMicMute', label: 'Mic mute' },
+      { code: 'MediaPlayPause', label: 'Play/Pause' },
+      { code: 'MediaTrackPrevious', label: 'Previous' },
+      { code: 'MediaTrackNext', label: 'Next' },
+      { code: 'LaunchApp1', label: 'App key 1' },
+      { code: 'LaunchApp2', label: 'App key 2' },
+      { code: 'Eject', label: 'Eject' },
+      { code: 'AirplaneMode', label: 'Airplane' }
+    ];
+
+    const keyEls = new Map();
+    const labelByCode = new Map();
+    const requiredCodes = [];
+    const tested = new Set();
+    const active = new Set();
+    const manualTested = new Set();
+    const extraDetected = new Map();
+    let currentLayout = '';
+
+    const layoutScreen = document.getElementById('layoutScreen');
+    const keyboard = document.getElementById('keyboard');
+    const manualBox = document.getElementById('manualKeys');
+    const missingBox = document.getElementById('missingKeys');
+    const extraBox = document.getElementById('extraKeys');
+    const eventLog = document.getElementById('eventLog');
+    const focusState = document.getElementById('focusState');
+
+    function addKeyElement(parent, item, className) {
+      const el = document.createElement('div');
+      el.className = 'key ' + (className || '');
+      el.dataset.code = item.code;
+      el.style.setProperty('--w', item.w || 1);
+      el.innerHTML = '<span>' + escapeHtml(item.label || item.code) + '</span><small>' + escapeHtml(item.code) + '</small>';
+      parent.appendChild(el);
+      keyEls.set(item.code, el);
+      labelByCode.set(item.code, item.label || item.code);
+      return el;
+    }
+
+    function chooseLayout(layoutKey) {
+      const layout = layouts[layoutKey] || layouts.full;
+      currentLayout = layoutKey;
+      keyboard.innerHTML = '';
+      keyEls.clear();
+      requiredCodes.length = 0;
+      keyboard.style.minWidth = layout.minWidth;
+      layout.rows.forEach(rowData => {
+        const row = document.createElement('div');
+        row.className = 'key-row';
+        rowData.forEach(item => {
+          if (item.gap) {
+            const gap = document.createElement('div');
+            gap.className = 'gap';
+            gap.style.setProperty('--w', item.gap);
+            row.appendChild(gap);
+            return;
+          }
+          addKeyElement(row, item, '');
+          requiredCodes.push(item.code);
+        });
+        keyboard.appendChild(row);
+      });
+      layoutScreen.classList.add('hidden');
+      document.getElementById('layoutName').textContent = layout.name;
+      resetAll();
+      document.body.focus();
+    }
+
+    manualKeys.forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'pill';
+      btn.type = 'button';
+      btn.dataset.code = item.code;
+      btn.textContent = item.label;
+      btn.addEventListener('click', () => {
+        manualTested.add(item.code);
+        btn.classList.add('pass');
+        updateStats(item.label, 'Marked manually');
+      });
+      manualBox.appendChild(btn);
+      labelByCode.set(item.code, item.label);
+    });
+
+    function normalizeEventCode(e) {
+      if (e.code && e.code !== 'Unidentified') return e.code;
+      const key = String(e.key || '').toLowerCase();
+      if (key === 'control') return e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT ? 'ControlRight' : 'ControlLeft';
+      if (key === 'shift') return e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT ? 'ShiftRight' : 'ShiftLeft';
+      if (key === 'alt') return e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT ? 'AltRight' : 'AltLeft';
+      if (key === 'meta' || key === 'os') return e.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT ? 'MetaRight' : 'MetaLeft';
+      const fallback = {
+        ' ': 'Space',
+        'escape': 'Escape',
+        'esc': 'Escape',
+        'enter': 'Enter',
+        'backspace': 'Backspace',
+        'tab': 'Tab',
+        'capslock': 'CapsLock',
+        'contextmenu': 'ContextMenu',
+        'printscreen': 'PrintScreen',
+        'scrolllock': 'ScrollLock',
+        'pause': 'Pause',
+        'arrowup': 'ArrowUp',
+        'arrowdown': 'ArrowDown',
+        'arrowleft': 'ArrowLeft',
+        'arrowright': 'ArrowRight'
+      };
+      return fallback[key] || e.key || 'Unidentified';
+    }
+
+    function markCode(code, source) {
+      if (!code || code === 'Unidentified') return;
+      const el = keyEls.get(code);
+      if (el) {
+        tested.add(code);
+        el.classList.add('hit');
+        eventLog.textContent = (source || 'Detected') + ': ' + (labelByCode.get(code) || code) + ' (' + code + ')';
+      } else {
+        const manualButton = manualBox.querySelector('[data-code="' + cssEscape(code) + '"]');
+        if (manualButton) {
+          manualTested.add(code);
+          manualButton.classList.add('pass');
+          eventLog.textContent = (source || 'Detected') + ': ' + labelByCode.get(code);
+        } else {
+          extraDetected.set(code, source || code);
+          eventLog.textContent = 'Extra key detected: ' + code;
+        }
+      }
+      updateStats(labelByCode.get(code) || code, source || 'Detected');
+    }
+
+    function setActive(code, isActive) {
+      const el = keyEls.get(code);
+      if (!el) return;
+      if (isActive) {
+        active.add(code);
+        el.classList.add('active');
+      } else {
+        active.delete(code);
+        el.classList.remove('active');
+      }
+    }
+
+    function updateStats(last, source) {
+      const done = requiredCodes.filter(code => tested.has(code)).length;
+      const missing = requiredCodes.length - done;
+      document.getElementById('testedCount').textContent = done + ' / ' + requiredCodes.length;
+      document.getElementById('missingCount').textContent = missing;
+      document.getElementById('manualCount').textContent = manualTested.size;
+      document.getElementById('lastKey').textContent = last || 'None';
+      renderMissing();
+      renderExtra();
+      if (source) focusState.textContent = 'Input captured. Continue testing keys.';
+    }
+
+    function renderMissing() {
+      missingBox.innerHTML = '';
+      const missing = requiredCodes.filter(code => !tested.has(code));
+      if (missing.length === 0) {
+        const pill = document.createElement('span');
+        pill.className = 'pill pass';
+        pill.textContent = 'All standard keys tested';
+        missingBox.appendChild(pill);
+        return;
+      }
+      missing.forEach(code => {
+        const pill = document.createElement('span');
+        pill.className = 'pill fail';
+        pill.textContent = labelByCode.get(code) || code;
+        missingBox.appendChild(pill);
+      });
+    }
+
+    function renderExtra() {
+      extraBox.innerHTML = '';
+      if (extraDetected.size === 0) {
+        const pill = document.createElement('span');
+        pill.className = 'pill';
+        pill.textContent = 'None yet';
+        extraBox.appendChild(pill);
+        return;
+      }
+      extraDetected.forEach((value, code) => {
+        const pill = document.createElement('span');
+        pill.className = 'pill pass';
+        pill.textContent = code;
+        extraBox.appendChild(pill);
+      });
+    }
+
+    function resetAll() {
+      tested.clear();
+      active.clear();
+      manualTested.clear();
+      extraDetected.clear();
+      document.querySelectorAll('.key.hit,.key.active').forEach(el => el.classList.remove('hit', 'active'));
+      document.querySelectorAll('.manual-grid .pill.pass').forEach(el => el.classList.remove('pass'));
+      eventLog.textContent = 'Waiting for key input.';
+      updateStats('None', '');
+    }
+
+    function summaryText() {
+      const missing = requiredCodes.filter(code => !tested.has(code)).map(code => labelByCode.get(code) || code);
+      const manual = Array.from(manualTested).map(code => labelByCode.get(code) || code);
+      const extra = Array.from(extraDetected.keys());
+      return [
+        'Keyboard Checker Summary',
+        'Date: ' + new Date().toLocaleString(),
+        'Keyboard layout: ' + ((layouts[currentLayout] && layouts[currentLayout].name) || 'Not selected'),
+        'Standard keys tested: ' + (requiredCodes.length - missing.length) + ' / ' + requiredCodes.length,
+        'Missing standard keys: ' + (missing.length ? missing.join(', ') : 'None'),
+        'Manual/media keys marked: ' + (manual.length ? manual.join(', ') : 'None'),
+        'Extra detected keys: ' + (extra.length ? extra.join(', ') : 'None')
+      ].join('\n');
+    }
+
+    async function copySummary() {
+      const text = summaryText();
+      try {
+        await navigator.clipboard.writeText(text);
+        eventLog.textContent = 'Summary copied to clipboard.';
+      } catch (err) {
+        const box = document.createElement('textarea');
+        box.value = text;
+        document.body.appendChild(box);
+        box.select();
+        document.execCommand('copy');
+        box.remove();
+        eventLog.textContent = 'Summary copied to clipboard.';
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function cssEscape(value) {
+      if (window.CSS && CSS.escape) return CSS.escape(value);
+      return String(value).replace(/"/g, '\\"');
+    }
+
+    window.addEventListener('keydown', e => {
+      if (!currentLayout) return;
+      const code = normalizeEventCode(e);
+      markCode(code, e.key || code);
+      setActive(code, true);
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+      }
+    }, true);
+
+    window.addEventListener('keyup', e => {
+      if (!currentLayout) return;
+      const code = normalizeEventCode(e);
+      markCode(code, e.key || code);
+      setActive(code, false);
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+      }
+    }, true);
+
+    window.addEventListener('blur', () => {
+      active.clear();
+      document.querySelectorAll('.key.active').forEach(el => el.classList.remove('active'));
+      focusState.innerHTML = '<span class="focus-warning">Window is not focused.</span> Click Focus Test.';
+    });
+
+    document.getElementById('focusBtn').addEventListener('click', () => {
+      document.body.focus();
+      focusState.textContent = 'Focused. Press keys now.';
+    });
+    document.getElementById('layoutBtn').addEventListener('click', () => {
+      layoutScreen.classList.remove('hidden');
+      focusState.textContent = 'Choose a keyboard size before continuing.';
+    });
+    document.querySelectorAll('.layout-choice').forEach(btn => {
+      btn.addEventListener('click', () => chooseLayout(btn.dataset.layout));
+    });
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('copyBtn').addEventListener('click', copySummary);
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    document.body.addEventListener('click', () => document.body.focus());
+
+    updateStats('None', '');
+  </script>
+</body>
+</html>
